@@ -2,6 +2,8 @@
 
 Converts a Markdown document into a high-quality podcast-style audio file using local TTS. Supports multiple backends — run fully offline on Apple Silicon with **Qwen3-TTS** or **Kokoro**, or use the built-in macOS voice as a zero-download fallback.
 
+Please read the [medium article](https://navaneethsen.medium.com/i-built-a-tool-that-turns-any-document-into-a-podcast-in-a-weekend-using-ai-agents-3ae4867b3e2a) for the introduction
+
 ## What It Does
 
 - Reads a `.md` file
