@@ -14,6 +14,15 @@ Please read the [medium article](https://navaneethsen.medium.com/i-built-a-tool-
 - Stitches all sections with calibrated silence gaps
 - Outputs a single `.wav` file
 
+## Audio Examples
+
+| Engine | Sample |
+|---|---|
+| Qwen3-TTS | [▶ podcast-qwen.wav](examples/podcast-qwen.wav) |
+| Kokoro | [▶ podcast-kokoro.wav](examples/podcast-kokoro.wav) |
+| macOS say | [▶ podcast-macos.wav](examples/podcast-macos.wav) |
+
+
 ## Supported TTS Engines
 
 | Engine | Flag | Quality | Speed | Requires |
