@@ -2,14 +2,26 @@
 Markdown Podcast Narrator
 
 Converts a Markdown document into a podcast-style audio file
-using Qwen3-TTS or macOS 'say' as a fallback.
+using Qwen3-TTS, Kokoro, or macOS 'say' as a fallback.
 
 Strategy:
-  - macOS 'say': single call with [[slnc N]] embedded pauses
-    for consistent emotion across the whole narration.
-  - Qwen3-TTS: section-level chunks (grouped by heading) so the
-    neural model has enough context for consistent tone within
-    each section, with PCM silence between sections.
+  - macOS 'say':
+    Sends the entire document in a single call with [[slnc N]]
+    embedded pause commands. This helps maintain consistent
+    pacing and emotion across the full narration.
+
+  - Qwen3-TTS:
+    Uses section-level chunks (grouped by headings). Each section
+    is large enough to give the neural model context for a stable
+    narrator tone. Sections are stitched together with PCM silence
+    to create natural pauses.
+
+  - Kokoro:
+    Uses medium-sized chunks (grouped by paragraphs or short
+    sections) to keep generation fast while preserving natural
+    phrasing. Audio segments are concatenated with short pauses
+    so the narration flows smoothly. Kokoro is optimized for
+    fast local inference while still producing natural speech.
 """
 
 import sys
