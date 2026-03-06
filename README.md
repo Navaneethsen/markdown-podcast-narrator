@@ -22,6 +22,8 @@ Please read the [medium article](https://navaneethsen.medium.com/i-built-a-tool-
 | Kokoro | [▶ podcast-kokoro.wav](examples/podcast-kokoro.wav) |
 | macOS say | [▶ podcast-macos.wav](examples/podcast-macos.wav) |
 
+<audio controls><source src="examples/podcast-qwen.wav" type="audio/mpeg"></audio>
+
 
 
 
