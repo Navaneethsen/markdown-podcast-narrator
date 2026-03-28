@@ -36,7 +36,7 @@ from narrator import Narrator
 @click.command()
 @click.argument("input_file", type=click.Path(exists=True))
 @click.option("-o", "--output", "output_file", default=None,
-              help="Output audio file path (default: output.wav)")
+              help="Output audio file path (default: output.mp3)")
 @click.option("--speaker", default="Ryan", help="Qwen3-TTS speaker name")
 @click.option("--rate", default=0.95, type=float, help="Speech rate multiplier (0.5-2.0)")
 @click.option("--fallback", is_flag=True, help="Use macOS 'say' instead of neural TTS")
@@ -57,12 +57,12 @@ def cli(input_file: str, output_file: str, speaker: str, rate: float,
     """
     try:
         if not output_file:
-            output_file = "output.wav"
+            output_file = "output.mp3"
 
         output_path = Path(output_file)
-        if output_path.suffix.lower() not in (".wav",):
-            output_file = str(output_path.with_suffix(".wav"))
-            click.echo("Note: output format changed to .wav")
+        if output_path.suffix.lower() not in (".wav", ".mp3"):
+            output_file = str(output_path.with_suffix(".mp3"))
+            click.echo("Note: output format changed to .mp3")
 
         # --- Parse ---
         click.echo("Parsing markdown...")
