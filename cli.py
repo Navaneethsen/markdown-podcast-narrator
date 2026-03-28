@@ -76,8 +76,34 @@ def pick_markdown_file() -> Path:
 
 
 def main():
+    import argparse
+    ap = argparse.ArgumentParser(description="Interactive markdown narrator")
+    ap.add_argument("-o", "--output", default=None,
+                    help="Output audio file path (default: <input>.wav)")
+    ap.add_argument("--speaker", default="Ryan",
+                    help="Qwen3-TTS speaker name (default: Ryan)")
+    ap.add_argument("--rate", default=0.95, type=float,
+                    help="Speech rate multiplier 0.5-2.0 (default: 0.95)")
+    ap.add_argument("--fallback", action="store_true",
+                    help="Use macOS 'say' instead of neural TTS")
+    ap.add_argument("--engine", default="kokoro", choices=["qwen", "kokoro", "macos"],
+                    help="TTS engine to use (default: kokoro)")
+    ap.add_argument("--model", default=None,
+                    help="Qwen3-TTS model ID")
+    ap.add_argument("--instruct", default=None,
+                    help="Narrator style instruction (e.g. 'Speak slowly and calmly')")
+    ap.add_argument("--kokoro-voice", default=None,
+                    help="Kokoro voice name (default: af_heart)")
+    args = ap.parse_args()
+
     selected_path = pick_markdown_file()
-    output_file = INVOKE_DIR / selected_path.with_suffix(".wav").name
+
+    if args.output:
+        output_file = Path(args.output)
+        if not output_file.is_absolute():
+            output_file = INVOKE_DIR / output_file
+    else:
+        output_file = INVOKE_DIR / selected_path.with_suffix(".wav").name
 
     print(f"\nInput:  {selected_path}")
     print(f"Output: {output_file}\n")
@@ -91,19 +117,24 @@ def main():
         print("Error: no content found in markdown file", file=sys.stderr)
         sys.exit(1)
 
-    # Init TTS (default: kokoro)
-    engine = "kokoro"
+    # Init TTS
+    engine = "macos" if args.fallback else args.engine
     print(f"Initializing TTS ({engine})...")
-    narrator = Narrator(engine=engine)
+    narrator = Narrator(engine=engine, model_id=args.model)
 
     if not narrator.initialize():
-        print(f"{engine} unavailable, falling back to macOS 'say'...")
-        narrator = Narrator(engine="macos")
-        if not narrator.initialize():
-            print("Error: no TTS backend available", file=sys.stderr)
+        if engine != "macos":
+            print(f"{engine} unavailable, falling back to macOS 'say'...")
+            narrator = Narrator(engine="macos")
+            if not narrator.initialize():
+                print("Error: no TTS backend available", file=sys.stderr)
+                sys.exit(1)
+        else:
+            print("Error: TTS initialization failed", file=sys.stderr)
             sys.exit(1)
 
-    narrator.set_voice_params(rate=0.95)
+    narrator.set_voice_params(rate=args.rate, speaker=args.speaker,
+                              instruct=args.instruct, kokoro_voice=args.kokoro_voice)
 
     # Choose chunk strategy
     if narrator.is_neural:
