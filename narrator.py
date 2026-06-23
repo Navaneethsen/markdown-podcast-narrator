@@ -134,13 +134,20 @@ class Narrator:
         which merges them into a single call with [[slnc]] markers.
         """
         output_file = Path(output_file)
-        if output_file.suffix.lower() != ".wav":
-            output_file = output_file.with_suffix(".wav")
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
+        # Always generate WAV first, then convert if needed
+        want_mp3 = output_file.suffix.lower() == ".mp3"
+        wav_file = output_file.with_suffix(".wav") if want_mp3 else output_file
+
         if self.engine == "macos":
-            return self._synth_single_macos(chunks, output_file)
-        return self._synth_chunked(chunks, output_file, on_progress)
+            ok = self._synth_single_macos(chunks, wav_file)
+        else:
+            ok = self._synth_chunked(chunks, wav_file, on_progress)
+
+        if ok and want_mp3:
+            ok = _wav_to_mp3(wav_file, output_file)
+        return ok
 
     def synthesize_sections(
         self,
@@ -152,13 +159,19 @@ class Narrator:
         Synthesize section-level chunks for neural TTS engines.
         """
         output_file = Path(output_file)
-        if output_file.suffix.lower() != ".wav":
-            output_file = output_file.with_suffix(".wav")
         output_file.parent.mkdir(parents=True, exist_ok=True)
 
+        want_mp3 = output_file.suffix.lower() == ".mp3"
+        wav_file = output_file.with_suffix(".wav") if want_mp3 else output_file
+
         if self.engine == "macos":
-            return self._synth_single_macos(sections, output_file)
-        return self._synth_chunked(sections, output_file, on_progress)
+            ok = self._synth_single_macos(sections, wav_file)
+        else:
+            ok = self._synth_chunked(sections, wav_file, on_progress)
+
+        if ok and want_mp3:
+            ok = _wav_to_mp3(wav_file, output_file)
+        return ok
 
     # ------------------------------------------------------------------
     # macOS 'say': single call with [[slnc]] embedded pauses
@@ -474,6 +487,36 @@ def _prepare_text_for_tts(text: str) -> str:
 def _make_silence(duration_ms: int, sample_rate: int) -> bytes:
     n_samples = int(sample_rate * duration_ms / 1000)
     return b"\x00\x00" * n_samples
+
+
+def _has_lame() -> bool:
+    try:
+        subprocess.run(["lame", "--version"], capture_output=True, check=False)
+        return True
+    except FileNotFoundError:
+        return False
+
+
+def _wav_to_mp3(wav_path: Path, mp3_path: Path, bitrate: str = "128") -> bool:
+    """Convert a WAV file to MP3 using lame, then remove the WAV."""
+    if not _has_lame():
+        print("\nMP3 output requires 'lame' which is not installed.")
+        print("Install it with:  brew install lame")
+        input("\nPress Enter after installing lame to continue...")
+
+        if not _has_lame():
+            logger.error("lame still not found — keeping WAV file: " + str(wav_path))
+            return False
+
+    result = subprocess.run(
+        ["lame", "-b", bitrate, str(wav_path), str(mp3_path)],
+        capture_output=True, text=True, check=False,
+    )
+    if result.returncode == 0:
+        wav_path.unlink(missing_ok=True)
+        return True
+    logger.error(f"lame failed: {result.stderr}")
+    return False
 
 
 def _write_wav(path: Path, pcm_data: bytes, sample_rate: int,
